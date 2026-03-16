@@ -44,7 +44,7 @@ Below are recent film/filmmaking news articles. Pick the ONE most relevant to in
 2. Ties it back to a filmmaking TECHNIQUE, SKILL, or LESSON that the audience can learn from
 3. Optionally mentions FrameCoach (https://framecoach.io) if it fits naturally — DO NOT force it
 4. Includes 1-2 relevant hashtags
-5. Is under 280 characters
+5. MUST be under 260 characters (STRICT LIMIT — count carefully, tweets over 280 chars are rejected)
 6. Sounds like a working filmmaker sharing insights, NOT a news bot
 
 RECENT ARTICLES:
