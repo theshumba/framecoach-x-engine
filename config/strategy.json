@@ -1,0 +1,12 @@
+{
+  "evergreenWeight": 0.65,
+  "trendingWeight": 0.35,
+  "trendingCacheTTLHours": 6,
+  "maxArticleAgeHours": 48,
+  "minArticlesRequired": 2,
+  "evergreenCooldownCount": 10,
+  "maxDuplicateRetries": 2,
+  "rateLimitDelayMs": 7000,
+  "postRetryAttempts": 3,
+  "postRetryBaseDelayMs": 2000
+}
