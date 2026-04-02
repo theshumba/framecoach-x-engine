@@ -1,58 +1,106 @@
 # FrameCoach X Engine
 
-Automated X/Twitter posting engine for **[FrameCoach](https://framecoach.io)** — a free, real-time camera coaching app for indie filmmakers and content creators. This engine keeps the [@framecoachapp](https://x.com/framecoachapp) account active with a steady stream of filmmaking tips, camera technique insights, and trending film industry content.
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-scheduled-2088FF?logo=githubactions)
+![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?logo=google)
+![X API](https://img.shields.io/badge/X_API-v2-000000?logo=x)
 
-## What Is FrameCoach?
-
-FrameCoach is a free, real-time camera coaching app for indie filmmakers and content creators. It provides on-screen guidance to help you master professional cinematography techniques — from framing and composition to exposure and camera movement. Whether you are shooting your first short film or levelling up your content creation, FrameCoach is your on-set coaching companion.
-
-- **App:** [framecoach.io](https://framecoach.io)
-- **X/Twitter:** [@framecoachapp](https://x.com/framecoachapp)
-- **Blog:** [theshumba.github.io/framecoach-blog](https://theshumba.github.io/framecoach-blog/)
-
-## What This Repo Does
-
-The X Engine is a GitHub Actions-powered auto-posting system that publishes filmmaking content to X/Twitter 5 times daily. It blends two content types:
-
-- **Evergreen tweets** — 48 handcrafted filmmaking tips covering camera settings, composition, lighting, and storytelling
-- **Trending tweets** — AI-generated posts based on real-time film industry news from sources like No Film School, PetaPixel, and IndieWire
-
-The system uses a 65/35 evergreen-to-trending split. If trending content generation fails, it gracefully falls back to evergreen posts so the account never goes silent.
-
-## Tech Stack
-
-- **Runtime:** Node.js 22 (ESM)
-- **AI:** Google Gemini 2.5 Flash for trending content generation
-- **Auth:** oauth-1.0a for X API v2
-- **News:** rss-parser for film industry RSS feeds
-- **Logging:** pino
-- **Scheduling:** GitHub Actions cron (5x daily — 8am, 11am, 2pm, 5pm, 8pm UTC)
+Automated posting engine for **[@framecoachapp](https://x.com/framecoachapp)** on X/Twitter. Publishes filmmaking tips and trending film industry content 5 times daily via GitHub Actions — zero infrastructure, fully serverless.
 
 ## How It Works
 
-1. GitHub Actions triggers on schedule
-2. Engine decides evergreen vs. trending based on configured split
-3. For trending: fetches latest film industry RSS headlines, generates a tweet with Gemini
-4. For evergreen: selects the next tip from a curated pool, tracks state to avoid repeats
-5. Posts to X via the v2 API
-6. Logs result and updates state
+```
+GitHub Actions cron (5x daily)
+  |
+  v
+Decide content type (65/35 evergreen/trending split)
+  |
+  +-- Evergreen: pick next tip from curated bank of 48, track state to avoid repeats
+  |
+  +-- Trending: ingest RSS feeds -> generate tweet with Gemini 2.5 Flash
+  |       (falls back to evergreen if trending fails)
+  |
+  v
+Post to X via v2 API (retry with exponential backoff)
+  |
+  v
+Commit updated state back to repo
+```
+
+## Content Sources
+
+**Evergreen** — 48 handcrafted filmmaking tips covering camera settings, composition, lighting, color grading, and storytelling. Cooldown system prevents repeats within a window of 10 posts.
+
+**Trending** — Real-time film industry news from RSS feeds (No Film School, PetaPixel, IndieWire, Google News). Gemini generates a concise, on-brand tweet from the latest headlines. Deduplication checks against recent posts.
+
+## Tech Stack
+
+| Component | Tech |
+|-----------|------|
+| Runtime | Node.js 22 (ESM) |
+| AI | Google Gemini 2.5 Flash |
+| Auth | oauth-1.0a (X API v2) |
+| News | rss-parser |
+| Logging | pino |
+| Scheduling | GitHub Actions cron |
+| Config | JSON strategy file (weights, cooldowns, retry params) |
 
 ## Usage
 
 ```bash
-# Install dependencies
+# Install
 npm install
 
-# Dry run (logs tweet but does not post)
+# Dry run (generates tweet, does not post)
 npm run dry-run
 
-# Post for real
+# Post to X
 npm start
+
+# Pretty-printed logs
+npm run start:pretty
 ```
 
-## Founded By
+## Configuration
 
-FrameCoach was founded by **Melusi** to make professional filmmaking education accessible to every creator.
+All behavior is controlled via `config/strategy.json`:
+
+```json
+{
+  "evergreenWeight": 0.65,
+  "trendingWeight": 0.35,
+  "trendingCacheTTLHours": 6,
+  "maxArticleAgeHours": 48,
+  "evergreenCooldownCount": 10,
+  "postRetryAttempts": 3
+}
+```
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `X_API_KEY` | Yes | X API consumer key |
+| `X_API_SECRET` | Yes | X API consumer secret |
+| `X_ACCESS_TOKEN` | Yes | X API access token |
+| `X_ACCESS_SECRET` | Yes | X API access token secret |
+| `GEMINI_API_KEY` | For trending | Google AI Studio API key |
+| `DRY_RUN` | No | Set to `true` to skip posting |
+
+## Pipeline Modules
+
+```
+src/
+  index.js      # Orchestrator — runs the full pipeline
+  decide.js     # Content type selector (evergreen vs trending)
+  evergreen.js  # Evergreen tweet picker with cooldown tracking
+  ingest.js     # RSS feed fetcher and article filter
+  generate.js   # Gemini-powered tweet generation
+  post.js       # X API v2 poster with retry logic
+  state.js      # State persistence (JSON file in state/)
+  validate.js   # Environment and config validation
+  logger.js     # Pino logger setup
+```
 
 ## Links
 
